@@ -156,8 +156,8 @@ console.log(statuscode.created);
 
     }
 
-    async sendOTP(id: string) {
-        const client = await User.findById(id);
+    async sendOTP(email: string) {
+        const client = await User.findOne({email});
 
         if(!client){
             throw new ApiError(statuscode.NotFound , errMSG.notExistUser)

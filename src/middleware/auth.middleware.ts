@@ -26,6 +26,8 @@ export const authMiddle = async (req: Request, res: Response, next: NextFunction
         process.env.AccessTokenSeceret as jwt.Secret
       );
       req.body.USERID = (decoded as JwtPayload).id;
+console.log("-------middleware-------"+(decoded as JwtPayload).id)
+console.log(req.body.USERID)
       const user = await User.findOne({_id : (decoded as JwtPayload).id})          
       next();
     } catch (err: any) {

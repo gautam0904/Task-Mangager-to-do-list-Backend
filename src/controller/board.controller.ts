@@ -42,6 +42,17 @@ export const  getAll = async (req : Request , res : Response) =>{
         res.status(error.statuscode || statuscode.NotImplemented).json({message : error.message});
     }
 }
+
+export const  get = async (req : Request , res : Response) =>{
+    try {
+	const id = req.params.id;
+        const boards = await boardService.getBoardById(id);
+        res.status(boards.statuscode).json(boards.content);
+    } catch (error : any) {
+        res.status(error.statuscode || statuscode.NotImplemented).json({message : error.message});
+    }
+}
+
 export const Delete = async (req : Request , res : Response) =>{
     try {
         const id = req.params.id;

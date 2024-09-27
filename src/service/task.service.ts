@@ -11,10 +11,10 @@ export class TaskService {
         const createdTask = await Task.create({
             title: taskData.title,
             description : taskData.description,
-            status : taskData.status,
             boardId : taskData.boardId,
-            order : taskData.order
         });
+
+	
 
         return {
             statuscode: statuscode.created,

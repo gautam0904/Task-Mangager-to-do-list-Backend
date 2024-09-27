@@ -23,7 +23,5 @@ export const loginUserSchema = object({
 export const taskSchema = object({
     title : string().required(),
     description : string().required(),
-    status : string().required(),
     boardId : string().required(),
-    order : number().required()
 });

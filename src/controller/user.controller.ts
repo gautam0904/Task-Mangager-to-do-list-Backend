@@ -68,8 +68,8 @@ export const Password = async (req : Request , res : Response) =>{
 
 export const getOTP = async (req : Request , res : Response) =>{
     try {
-        const id = req.body.USERID;
-        const OTP = await userService.sendOTP(id);
+        const email = req.body.email;
+        const OTP = await userService.sendOTP(email);
         res.status(OTP.statuscode).json(OTP.content);
     } catch (error : any) {
         res.status(error.statuscode || statuscode.NotImplemented).json({message : error.message});
@@ -80,6 +80,7 @@ export const verify = async (req : Request , res : Response) =>{
     try {
         const otp = req.body.otp ?? "";
         const id = req.body.USERID;
+	
         const result = await userService.verifyOTP(otp , id);
         res.status(result.statuscode).json(result.content);
     } catch (error : any) {

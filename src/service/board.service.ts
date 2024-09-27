@@ -50,6 +50,7 @@ export class BoardService {
             }
         }
     }
+
     async getBoardById(id : string) {
 
         const getBoard = await Board.aggregate([
