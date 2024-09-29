@@ -54,6 +54,18 @@ export const  update = async (req : Request , res : Response) =>{
         res.status(error.statuscode || statuscode.NotImplemented).json({message : error.message});
     }
 }
+export const  updatePassword = async (req : Request , res : Response) =>{
+    try {
+        const updateData  = req.body;
+        const id = req.params.id;
+
+
+        const updatedUser = await userService.updateUser(updateData ,id);
+        res.status(updatedUser.statuscode).json(updatedUser.content);
+    } catch (error ) {
+        res.status(error.statuscode || statuscode.NotImplemented).json({message : error.message});
+    }
+}
 
 export const Password = async (req : Request , res : Response) =>{
     try {
@@ -68,7 +80,9 @@ export const Password = async (req : Request , res : Response) =>{
 
 export const getOTP = async (req : Request , res : Response) =>{
     try {
-        const email = req.body.email;
+        const email = req.body.email.email;
+        console.log(email);
+        
         const OTP = await userService.sendOTP(email);
         res.status(OTP.statuscode).json(OTP.content);
     } catch (error : any) {

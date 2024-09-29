@@ -12,6 +12,7 @@ userRouter.post("/signup",upload.fields([{
 userRouter.post("/login" , login);
 userRouter.post("/getOTP" , getOTP);
 userRouter.post("/verifyOTP" , verify);
-userRouter.put("/update" , authMiddle , update );
+userRouter.put("/update/:id" , authMiddle , update );
+userRouter.put("/updatepassword" , update );
 
 export default userRouter

@@ -4,23 +4,31 @@ import { statuscode } from "../constant/statusCode";
 import { ApiError } from "../utility/apiError";
 import Task from "../model/task.model";
 import { ITaskDto } from "../dto/ITaskDto";
+import { BoardService } from "./board.service";
+import { IBoardDto } from "../dto/IBoardDto";
 
 export class TaskService {
+    boardService = new BoardService();
     async createTask(taskData: ITaskDto) {
+
+        const boardResponse = await this.boardService.getBoardById(taskData.boardId);
+        const board : any= boardResponse.content.data;
 
         const createdTask = await Task.create({
             title: taskData.title,
             description : taskData.description,
             boardId : taskData.boardId,
         });
-
-	
+        
+        board[0].tasksID.push(new mongoose.Types.ObjectId(createdTask._id));
+    
+        const updatedBoard = await this.boardService.updateBoard(board[0] , board[0]._id)
 
         return {
             statuscode: statuscode.created,
             content: {
                 message: MSG.success("Task is created"),
-                data: createdTask
+                data: createdTask,updatedBoard
             }
         }
     }
@@ -42,11 +50,11 @@ export class TaskService {
 
         const result = await Task.findByIdAndUpdate(
             {
-                _id: new mongoose.Schema.Types.ObjectId(id),
+                _id: new mongoose.Types.ObjectId(id),
             },
             {
                 $set: {
-                    updateTaskData
+                    ...updateTaskData
                 },
             },
             { new: true }
@@ -65,7 +73,7 @@ export class TaskService {
 
     async deleteTask(id: string) {
 
-        const deltedTask = await Task.findByIdAndDelete(new mongoose.Schema.Types.ObjectId(id))
+        const deltedTask = await Task.findByIdAndDelete(new mongoose.Types.ObjectId(id))
         if (!deltedTask) {
             throw new ApiError(statuscode.NotImplemented, errMSG.defaultErrorMsg);
         }

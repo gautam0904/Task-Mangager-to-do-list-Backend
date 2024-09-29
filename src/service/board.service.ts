@@ -25,22 +25,17 @@ export class BoardService {
     async getAllBoard() {
 
         const getAllBoards = await Board.aggregate([
-  { $match: {} },
-  {
-    $lookup: {
-      from: "tasks",
-      localField: "tasksID",
-      foreignField: "_id",
-      as: "tasks",
-    },
-  },
-  {
-    $unwind: {
-      path: "$tasks",
-      preserveNullAndEmptyArrays: true,
-    },
-  },
-]);
+            { $match: {} },
+            {
+                $lookup: {
+                    from: "tasks",
+                    localField: "tasksID",
+                    foreignField: "_id",
+                    as: "tasks",
+                },
+            },
+           
+        ]);
 
         return {
             statuscode: statuscode.created,
@@ -51,25 +46,20 @@ export class BoardService {
         }
     }
 
-    async getBoardById(id : string) {
+    async getBoardById(id: string) {
 
         const getBoard = await Board.aggregate([
-  {$match :{_id : new mongoose.Schema.Types.ObjectId(id)}},
-  {
-    $lookup: {
-      from: "tasks",
-      localField: "tasksID",
-      foreignField: "_id",
-      as: "tasks",
-    },
-  },
-  {
-    $unwind: {
-      path: "$tasks",
-      preserveNullAndEmptyArrays: true,
-    },
-  },
-]);
+            { $match: { _id: new mongoose.Types.ObjectId(id) } },
+            {
+                $lookup: {
+                    from: "tasks",
+                    localField: "tasksID",
+                    foreignField: "_id",
+                    as: "tasks",
+                },
+            },
+           
+        ]);
 
         return {
             statuscode: statuscode.created,
@@ -80,35 +70,38 @@ export class BoardService {
         }
     }
 
-    async updateBoard(updateBoardData: IBoardDto , id: string) {
-
+    async updateBoard(updateBoardData: any, id: string) {
+        console.log(updateBoardData);
+        
         const result = await Board.findByIdAndUpdate(
             {
-                _id: new mongoose.Schema.Types.ObjectId(id),
+                _id: new mongoose.Types.ObjectId(id),
             },
             {
                 $set: {
-                    updateBoardData
+                   ...updateBoardData
                 },
             },
             { new: true }
         );
+        console.log(result);
+
         if (result) {
             return {
                 statuscode: statuscode.ok,
                 content: {
-                    message : MSG.success("Board Is updated"),
-                    data : result
+                    message: MSG.success("Board Is updated"),
+                    data: result
                 },
             };
         }
         throw new ApiError(statuscode.NotImplemented, errMSG.defaultErrorMsg);
     }
 
-    async deleteBoard(id : string) {
+    async deleteBoard(id: string) {
 
-        const deltedBoard = await Board.findByIdAndDelete(new mongoose.Schema.Types.ObjectId(id))
-        if(deltedBoard){
+        const deltedBoard = await Board.findByIdAndDelete(new mongoose.Types.ObjectId(id))
+        if (deltedBoard) {
             return {
                 statuscode: statuscode.ok,
                 content: {

@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken"
 import { transporter } from "../utility/email";
 import mongoose from "mongoose";
+import cron from 'node-cron';
 
 export class UserService {
 
@@ -31,7 +32,6 @@ export class UserService {
                 profilePic: this.cloudinaryurl
             })
             this.cloudinaryurl = undefined;
-console.log(statuscode.created);
             return {
                 status: statuscode.created,
                 content: {
@@ -94,14 +94,16 @@ console.log(statuscode.created);
         try {
             const profile = await uploadOnCloudinary(updateData.profilePic);
             this.cloudinaryurl = profile?.url;
+            updateData.profilePic = this.cloudinaryurl as string;
+    console.log(updateData);
     
             const result = await User.findByIdAndUpdate(
                 {
-                    _id: new mongoose.Schema.Types.ObjectId(id),
+                    _id: new mongoose.Types.ObjectId(id),
                 },
                 {
                     $set: {
-                        updateData
+                        ...updateData
                     },
                 },
                 { new: true }
@@ -135,7 +137,7 @@ console.log(statuscode.created);
     async updateUserPassword(updateData: IUserDto, id: string) {
         const user = await User.findById(
             {
-                _id: new mongoose.Schema.Types.ObjectId(id),
+                _id: new mongoose.Types.ObjectId(id),
             },
         );
         if(!user){
@@ -156,39 +158,97 @@ console.log(statuscode.created);
 
     }
 
+  
+    // async sendOTP(email : any) {
+    //     const client = await User.findOne({ email });
+    
+    //     if (!client) {
+    //         throw new ApiError(statuscode.NotFound, errMSG.notExistUser);
+    //     }
+    
+    //     const otp = Math.floor(Math.random() * 9000 + 1000); // Generate OTP
+    
+    //     const mailOptions : any= {
+    //         from: 'your-email@gmail.com',
+    //         to: client.email,
+    //         subject: 'Password Reset',
+    //         text: `Your OTP is: ${otp}`,
+    //     };
+    
+    //     try {
+    //         await transporter.sendMail(mailOptions);
+    //         console.log('Email sent successfully');
+    //     } catch (error) {
+    //         console.error('Error sending email:', error);
+    //         throw new ApiError(statuscode.NotImplemented, 'Error sending email');
+    //     }
+    
+    //     return {
+    //         statuscode: statuscode.ok,
+    //         content: {
+    //             message: "We sent an email to this address " + client.email,
+    //         },
+    //     };
+    // }
+
     async sendOTP(email: string) {
-        const client = await User.findOne({email});
-
-        if(!client){
-            throw new ApiError(statuscode.NotFound , errMSG.notExistUser)
+        const client = await User.findOne({ email });
+    
+        if (!client) {
+            throw new ApiError(statuscode.NotFound, 'User does not exist');
         }
-
-        const otp = Math.floor(Math.random()*10 +1000);
-
+    
+        const otp = Math.floor(Math.random() * 9000 + 1000); // Generate OTP
+        console.log(client);
+        
+        client.password = client.password
+        client.otp = otp.toString();
+        client.otpCreatedAt = new Date();
+        await client.save();
+    
         const mailOptions = {
             from: 'your-email@gmail.com',
             to: client.email,
             subject: 'Password Reset',
-            text: `Your OTP is: ${otp}`
+            text: `Your OTP is: ${otp}`,
         };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error('Error sending email:', error);
-                throw new ApiError(statuscode.NotImplemented , 'Error sending email')
-            } 
-            console.log('Email sent:', info.response);
-        });
+    
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log('Email sent successfully');
+    
+            // Schedule the deletion of the OTP after 10 minutes
+            cron.schedule('*/1 * * * *', async () => { // Runs every minute
+                const now = new Date();
+                const expirationTime = client.otpCreatedAt ? new Date(client.otpCreatedAt) : null;
+    
+                if (expirationTime) {
+                    expirationTime.setMinutes(expirationTime.getMinutes() + 10);
+    
+                    if (now >= expirationTime) {
+                        client.otp = null; 
+                        client.otpCreatedAt = null; 
+                        await client.save();
+                        console.log('OTP deleted from database');
+                    }
+                }
+            });
+    
+        } catch (error) {
+            console.error('Error sending email:', error);
+            throw new ApiError(statuscode.NotImplemented, 'Error sending email');
+        }
+    
         return {
             statuscode: statuscode.ok,
             content: {
-                message : "we send email to this address "+ client.email
+                message: "We sent an email to this address " + client.email,
             },
         };
     }
 
     async verifyOTP(otp : string , id : string){
-        const user = await User.findById(new mongoose.Schema.Types.ObjectId(id));
+        const user = await User.findById(new mongoose.Types.ObjectId(id));
 
         if (!user) {
             throw new ApiError(statuscode.NotFound ,errMSG.notExistUser)
